@@ -51,7 +51,7 @@ html,body{background:#f4f7f5;color:var(--ink);font-family:"BIZ UDPGothic","Yu Go
  <div class="main">
   <div class="panel">
    <h2>御社の条件</h2>
-   <div class="presets"><button data-p="20,350000,80000,40">20名</button><button data-p="50,380000,100000,40">50名</button><button data-p="100,400000,120000,40">100名</button><button data-p="300,380000,100000,40">300名</button></div>
+   <div class="presets"><button data-n="20">20名</button><button data-n="50">50名</button><button data-n="100">100名</button><button data-n="300">300名</button></div>
    <div class="f"><label>切り分けの対象人数<b><span id="vn"></span><small>名</small></b></label><input id="n" type="range" min="1" max="500" step="1"></div>
    <div class="f"><label>いまの平均月給（1人）<b><span id="vp"></span><small>万円</small></b></label><input id="p" type="range" min="220000" max="1000000" step="10000"></div>
    <div class="f"><label>業務委託にする仕事の報酬（1人・月）<b><span id="vc"></span><small>万円</small></b></label><input id="c" type="range" min="0" max="500000" step="10000"><div class="warn" id="warn"></div></div>
@@ -101,11 +101,12 @@ function calc(){
  var mx=Math.max(c0,1);$('b0').style.width='100%';$('b1').style.width=(c1/mx*100)+'%';$('v0').textContent=yen(c0/1e4)+'万円';$('v1').textContent=yen(c1/1e4)+'万円';
  var k0=Math.min(650000,Math.max(88000,s0)),k1=Math.min(650000,Math.max(88000,s1));
  $('down').innerHTML='将来の厚生年金：1年働くごとに年 約'+yen((k0-k1)*12*5.481/1000)+'円 少なくなります<br>病気で休んだときの手当（傷病手当金）：1日 '+yen(s0/30*2/3)+'円 → '+yen(s1/30*2/3)+'円<br>';
- var key=[n,p,+$('c').value,Math.round(a*100)].join(',');
- document.querySelectorAll('.presets button').forEach(function(b){b.classList.toggle('on',b.dataset.p===key)});
+ // 人数のボタンは人数だけを表します。月給・報酬は変えません（2026-11-12：押すたびに給与が飛ぶ、とのご指摘）
+ document.querySelectorAll('.presets button[data-n]').forEach(function(b){b.classList.toggle('on',+b.dataset.n===n)});
 }
 function set(v){var x=v.split(',');$('n').value=x[0];$('p').value=x[1];$('c').value=x[2];$('a').value=x[3];calc();}
 document.querySelectorAll('input').forEach(function(i){i.addEventListener('input',calc)});
-document.querySelectorAll('.presets button').forEach(function(b){b.addEventListener('click',function(){set(b.dataset.p)})});
-set(new URLSearchParams(location.search).get('p')||'50,380000,100000,40');
+document.querySelectorAll('.presets button[data-n]').forEach(function(b){b.addEventListener('click',function(){$('n').value=b.dataset.n;calc();})});
+// 初期値は、平均月給30万円・委託の報酬10万円（雇用の給与20万円＝床）の標準の形から始めます
+set(new URLSearchParams(location.search).get('p')||'50,300000,100000,40');
 </script></body></html>
