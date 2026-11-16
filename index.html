@@ -17,7 +17,7 @@ html,body{background:#f4f7f5;color:var(--ink);font-family:"BIZ UDPGothic","Yu Go
 .f input[type=range]{width:100%;accent-color:#006357;height:22px}
 .hint{font-size:11.5px;color:var(--sub);line-height:1.4}
 .presets{display:flex;gap:6px}.presets button{flex:1;border:1.5px solid var(--teal);background:#fff;color:var(--teal);font-weight:800;font-size:12.5px;border-radius:8px;padding:6px 4px;cursor:pointer;font-family:inherit}
-.presets button.on{background:var(--teal);color:#fff}
+.presets button.on{background:var(--teal);color:#fff}.fl{margin-top:6px}
 .split{display:flex;height:52px;border-radius:8px;overflow:hidden;color:#fff;font-weight:800;font-size:13px}
 .split div{display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.25;white-space:nowrap;overflow:hidden}
 .split small{font-weight:500;font-size:11px}
@@ -54,7 +54,8 @@ html,body{background:#f4f7f5;color:var(--ink);font-family:"BIZ UDPGothic","Yu Go
    <div class="presets"><button data-n="20">20名</button><button data-n="50">50名</button><button data-n="100">100名</button><button data-n="300">300名</button></div>
    <div class="f"><label>切り分けの対象人数<b><span id="vn"></span><small>名</small></b></label><input id="n" type="range" min="1" max="500" step="1"></div>
    <div class="f"><label>いまの平均月給（1人）<b><span id="vp"></span><small>万円</small></b></label><input id="p" type="range" min="220000" max="1000000" step="10000"></div>
-   <div class="f"><label>業務委託にする仕事の報酬（1人・月）<b><span id="vc"></span><small>万円</small></b></label><input id="c" type="range" min="0" max="500000" step="10000"><div class="warn" id="warn"></div></div>
+   <div class="f keep"><label>給与で残す金額（1人・月）<b><span id="vk"></span><small>万円</small></b></label><div class="hint">月給 − 委託の報酬。社会保険はこの額にかかります</div></div>
+   <div class="f"><label>業務委託にする仕事の報酬（1人・月）<b><span id="vc"></span><small>万円</small></b></label><input id="c" type="range" min="0" max="500000" step="10000"><div class="presets fl"><button data-f="200000" class="on">通常（給与の下限20万円）</button><button data-f="150000">フレックス（下限15万円）</button></div><div class="warn" id="warn"></div></div>
    <div class="f"><label>40歳以上の方の割合<b><span id="va"></span><small>%</small></b></label><input id="a" type="range" min="0" max="100" step="10"><div class="hint">40〜64歳の方は介護保険料もかかるため、効果が少し大きくなります</div></div>
    <div><div class="split" id="split"></div><div class="hint" style="margin-top:4px">1人あたりの月の受け取り方（合計はそのまま）</div></div>
   </div>
@@ -87,12 +88,12 @@ function yen(v){return Math.round(v).toLocaleString('ja-JP')}
 function man(v){return (Math.round(v/1000)/10).toLocaleString('ja-JP')}
 function calc(){
  var n=+$('n').value,p=+$('p').value,c=+$('c').value,a=+$('a').value/100,warn='';
- if(p-c<FLOOR){c=Math.max(0,p-FLOOR);warn='雇用の給与は月20万円を下限にしています（委託は'+man(c)+'万円までで計算）';}
+ if(p-c<FLOOR){c=Math.max(0,p-FLOOR);warn='雇用の給与は月'+man(FLOOR)+'万円を下限にしています（委託は'+man(c)+'万円までで計算）';}
  var s0=stdOf(p),s1=stdOf(p-c);
  function co(s){return a*prem(s,1,'co')+(1-a)*prem(s,0,'co')}
  function em(s){return a*prem(s,1,'em')+(1-a)*prem(s,0,'em')}
  var c0=co(s0)*n,c1=co(s1)*n,per=co(s0)-co(s1),emp=em(s0)-em(s1),g=SHK.indexOf(s0)-SHK.indexOf(s1);
- $('vn').textContent=n;$('vp').textContent=man(p);$('vc').textContent=man(+$('c').value);$('va').textContent=Math.round(a*100);$('warn').textContent=warn;
+ $('vn').textContent=n;$('vp').textContent=man(p);$('vc').textContent=man(+$('c').value);$('va').textContent=Math.round(a*100);$('warn').textContent=warn;$('vk').textContent=man(p-c);
  $('split').innerHTML='<div style="flex:'+(p-c)+';background:#006357">雇用 '+man(p-c)+'万円<small>給与（社会保険の対象）</small></div>'+(c>0?'<div style="flex:'+c+';background:#B07A2E">委託 '+man(c)+'万円<small>業務委託の報酬</small></div>':'');
  $('hero').textContent=yen((c0-c1)/1e4);$('k1').textContent=yen(per);$('k2').textContent=yen(emp);
  $('k1s').textContent='標準報酬月額 '+man(s0)+'万円 → '+man(s1)+'万円';
@@ -107,6 +108,8 @@ function calc(){
 function set(v){var x=v.split(',');$('n').value=x[0];$('p').value=x[1];$('c').value=x[2];$('a').value=x[3];calc();}
 document.querySelectorAll('input').forEach(function(i){i.addEventListener('input',calc)});
 document.querySelectorAll('.presets button[data-n]').forEach(function(b){b.addEventListener('click',function(){$('n').value=b.dataset.n;calc();})});
+// 給与の下限は「通常20万円／フレックス15万円」を選べます（2026-11-16：11/1版にあった切り替えを、當眞さんのご依頼で戻しました）
+document.querySelectorAll('.fl button').forEach(function(b){b.addEventListener('click',function(){FLOOR=+b.dataset.f;document.querySelectorAll('.fl button').forEach(function(x){x.classList.toggle('on',x===b)});calc();})});
 // 初期値は、平均月給30万円・委託の報酬10万円（雇用の給与20万円＝床）の標準の形から始めます
 set(new URLSearchParams(location.search).get('p')||'50,300000,100000,40');
 </script></body></html>
